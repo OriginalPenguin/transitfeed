@@ -14,11 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import division
+from __future__ import absolute_import
+from past.utils import old_div
 import bisect
 
-from gtfsfactoryuser import GtfsFactoryUser
-import problems as problems_module
-import util
+from .gtfsfactoryuser import GtfsFactoryUser
+from . import problems as problems_module
+from . import util
 
 class Shape(GtfsFactoryUser):
   """This class represents a geographic shape that corresponds to the route
@@ -164,6 +167,6 @@ class Shape(GtfsFactoryUser):
       return None
     # This won't work crossing longitude 180 and is only an approximation which
     # works well for short distance.
-    lat = (lat1 * ca + lat0 * bc) / ba
-    lng = (lng1 * ca + lng0 * bc) / ba
+    lat = old_div((lat1 * ca + lat0 * bc), ba)
+    lng = old_div((lng1 * ca + lng0 * bc), ba)
     return (lat, lng, shape_dist_traveled)

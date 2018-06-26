@@ -15,10 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import absolute_import
 import bisect
-from gtfsobjectbase import GtfsObjectBase
-import problems as problems_module
-import util
+from .gtfsobjectbase import GtfsObjectBase
+from . import problems as problems_module
+from . import util
 import sys
 
 class ShapePoint(GtfsObjectBase):
@@ -44,7 +45,7 @@ class ShapePoint(GtfsObjectBase):
     self._schedule = None
     if field_dict:
       if isinstance(field_dict, self.__class__):
-        for k, v in field_dict.iteritems():
+        for k, v in field_dict.items():
           self.__dict__[k] = v
       else:
         self.__dict__.update(field_dict)

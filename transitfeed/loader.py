@@ -14,18 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import range
+from past.builtins import basestring
+from builtins import object
 import codecs
-import cStringIO as StringIO
+import io as StringIO
 import csv
 import os
 import re
 import zipfile
 
-import gtfsfactory as gtfsfactory_module
-import problems
-import util
+from . import gtfsfactory as gtfsfactory_module
+from . import problems
+from . import util
 
-class Loader:
+class Loader(object):
   def __init__(self,
                feed_path=None,
                schedule=None,
@@ -127,7 +134,7 @@ class Loader:
       # Convert and continue, so we can find more errors
       contents = codecs.getdecoder('utf-16')(contents)[0].encode('utf-8')
 
-    null_index = contents.find('\0')
+    null_index = contents.decode('utf-8').find('\0')
     if null_index != -1:
       # It is easier to get some surrounding text than calculate the exact
       # row_num
@@ -151,7 +158,7 @@ class Loader:
     if not contents:
       return
 
-    eol_checker = util.EndOfLineChecker(StringIO.StringIO(contents),
+    eol_checker = util.EndOfLineChecker(StringIO.StringIO(contents.decode('utf-8')),
                                    file_name, self._problems)
     # The csv module doesn't provide a way to skip trailing space, but when I
     # checked 15/675 feeds had trailing space in a header row and 120 had spaces
@@ -160,7 +167,7 @@ class Loader:
     # integer and id fields; they will be validated at higher levels.
     reader = csv.reader(eol_checker, skipinitialspace=True)
 
-    raw_header = reader.next()
+    raw_header = next(reader)
     header_occurrences = util.defaultdict(lambda: 0)
     header = []
     valid_columns = []  # Index into raw_header and raw_row
@@ -184,7 +191,7 @@ class Loader:
       valid_columns.append(i)
       header_occurrences[h_stripped] += 1
 
-    for name, count in header_occurrences.items():
+    for name, count in list(header_occurrences.items()):
       if count > 1:
         self._problems.DuplicateColumn(
             header=name,
@@ -253,7 +260,7 @@ class Loader:
       unicode_error_columns = []  # index of valid_values elements with an error
       for i in valid_columns:
         try:
-          valid_values.append(raw_row[i].decode('utf-8'))
+          valid_values.append(raw_row[i])
         except UnicodeDecodeError:
           # Replace all invalid characters with REPLACEMENT CHARACTER (U+FFFD)
           valid_values.append(codecs.getdecoder("utf8")
@@ -275,7 +282,7 @@ class Loader:
       # of both the Google and OneBusAway GTFS parser.
       valid_values = [value.strip() for value in valid_values]
 
-      d = dict(zip(header, valid_values))
+      d = dict(list(zip(header, valid_values)))
       yield (d, line_num, header, valid_values)
 
   # TODO: Add testing for this specific function
@@ -286,17 +293,17 @@ class Loader:
     if not contents:
       return
 
-    eol_checker = util.EndOfLineChecker(StringIO.StringIO(contents),
+    eol_checker = util.EndOfLineChecker(StringIO.StringIO(contents.decode('utf-8')),
                                    file_name, self._problems)
     reader = csv.reader(eol_checker)  # Use excel dialect
 
-    header = reader.next()
-    header = map(lambda x: x.strip(), header)  # trim any whitespace
+    header = next(reader)
+    header = [x.strip() for x in header]  # trim any whitespace
     header_occurrences = util.defaultdict(lambda: 0)
     for column_header in header:
       header_occurrences[column_header] += 1
 
-    for name, count in header_occurrences.items():
+    for name, count in list(header_occurrences.items()):
       if count > 1:
         self._problems.DuplicateColumn(
             header=name,
@@ -357,7 +364,7 @@ class Loader:
             result[i] = u''
           else:
             try:
-              result[i] = row[ci].decode('utf-8').strip()
+              result[i] = row[ci].strip()
             except UnicodeDecodeError:
               # Replace all invalid characters with
               # REPLACEMENT CHARACTER (U+FFFD)
@@ -484,7 +491,7 @@ class Loader:
 
     # Now insert the periods into the schedule object, so that they're
     # validated with both calendar and calendar_dates info present
-    for period, context in periods.values():
+    for period, context in list(periods.values()):
       self._problems.SetFileContext(*context)
       self._schedule.AddServicePeriodObject(period, self._problems)
       self._problems.ClearContext()
@@ -519,7 +526,7 @@ class Loader:
       shape.AddShapePointObjectUnsorted(shapepoint, self._problems)
       self._problems.ClearContext()
 
-    for shape_id, shape in shapes.items():
+    for shape_id, shape in list(shapes.items()):
       self._schedule.AddShapeObject(shape, self._problems)
       del shapes[shape_id]
 

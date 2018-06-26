@@ -14,11 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import division
+from __future__ import absolute_import
+from builtins import str
+from past.builtins import basestring
+from past.utils import old_div
 import warnings
 
-from gtfsobjectbase import GtfsObjectBase
-import problems as problems_module
-import util
+from .gtfsobjectbase import GtfsObjectBase
+from . import problems as problems_module
+from . import util
 
 class Trip(GtfsObjectBase):
   _REQUIRED_FIELD_NAMES = ['route_id', 'service_id', 'trip_id']
@@ -103,7 +108,7 @@ class Trip(GtfsObjectBase):
                    "stop_sequence=? and stop_id=?",
                    (self.trip_id, stoptime.stop_sequence, stoptime.stop_id))
     if cursor.rowcount == 0:
-      raise problems_module.Error, 'Attempted replacement of StopTime object which does not exist'
+      raise problems_module.Error('Attempted replacement of StopTime object which does not exist')
     self._AddStopTimeObjectUnordered(stoptime, schedule)
 
   def AddStopTimeObject(self, stoptime, schedule=None, problems=None):
@@ -207,7 +212,7 @@ class Trip(GtfsObjectBase):
         rv.append( (st.GetTimeSecs(), st, True) )
       else:
         distance_traveled_between_timepoints += util.ApproximateDistanceBetweenStops(stoptimes[i-1].stop, st.stop)
-        distance_percent = distance_traveled_between_timepoints / distance_between_timepoints
+        distance_percent = old_div(distance_traveled_between_timepoints, distance_between_timepoints)
         total_time = next_timepoint.GetTimeSecs() - cur_timepoint.GetTimeSecs()
         time_estimate = distance_percent * total_time + cur_timepoint.GetTimeSecs()
         rv.append( (int(round(time_estimate)), st, False) )
@@ -476,8 +481,8 @@ class Trip(GtfsObjectBase):
       return (self.trip_id,
               util.FormatSecondsSinceMidnight(headway[0]),
               util.FormatSecondsSinceMidnight(headway[1]),
-              unicode(headway[2]),
-              unicode(headway[3]))
+              str(headway[2]),
+              str(headway[3]))
 
   def GetFrequencyOutputTuples(self):
     tuples = []
@@ -604,7 +609,7 @@ class Trip(GtfsObjectBase):
       try:
         route_type = self._schedule.GetRoute(self.route_id).route_type
         max_speed = route_class._ROUTE_TYPES[route_type]['max_speed']
-      except KeyError, e:
+      except KeyError as e:
         # If route_type cannot be found, assume it is 0 (Tram) for checking
         # speeds between stops.
         max_speed = route_class._ROUTE_TYPES[0]['max_speed']
@@ -747,8 +752,8 @@ class Trip(GtfsObjectBase):
                                  type=problems_module.TYPE_WARNING)
         return
       # This needs floating point division for precision.
-      speed_between_stops = ((float(dist_between_stops) / 1000) /
-                                (float(time_between_stops) / 3600))
+      speed_between_stops = (old_div((old_div(float(dist_between_stops), 1000)),
+                                (old_div(float(time_between_stops), 3600))))
       if speed_between_stops > max_speed:
         problems.TooFastTravel(self.trip_id,
                                prev_stop.stop_name,

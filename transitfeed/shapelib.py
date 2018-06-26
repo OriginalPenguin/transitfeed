@@ -28,7 +28,14 @@ are relatively close together on the surface of the earth, this
 is adequate; for other purposes, this library may not be accurate
 enough.
 """
+from __future__ import division
+from __future__ import print_function
 
+from past.builtins import cmp
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 __author__ = 'chris.harrelson.code@gmail.com (Chris Harrelson)'
 
 import copy
@@ -108,7 +115,7 @@ class Point(object):
     """
     Returns a unit point in the same direction as self.
     """
-    return self.Times(1 / self.Norm2())
+    return self.Times(old_div(1, self.Norm2()))
 
   def RobustCrossProd(self, other):
     """
@@ -199,8 +206,8 @@ class Point(object):
     Returns a new point representing this latitude and longitude under
     a spherical Earth model.
     """
-    phi = lat * (math.pi / 180.0)
-    theta = lng * (math.pi / 180.0)
+    phi = lat * (old_div(math.pi, 180.0))
+    theta = lng * (old_div(math.pi, 180.0))
     cosphi = math.cos(phi)
     return Point(math.cos(theta) * cosphi,
                  math.sin(theta) * cosphi,
@@ -229,7 +236,7 @@ def GetClosestPoint(x, a, b):
   # project to the great circle going through a and b
   p = x.Minus(
       a_cross_b.Times(
-      x.DotProd(a_cross_b) / a_cross_b.Norm2()))
+      old_div(x.DotProd(a_cross_b), a_cross_b.Norm2())))
 
   # if p lies between a and b, return it
   if SimpleCCW(a_cross_b, a, p) and SimpleCCW(p, b, a_cross_b):
@@ -400,9 +407,9 @@ class PolyCollection(object):
       print ("Warning: duplicate shape id being added to collection: " +
              poly.GetName())
       if poly.GreedyPolyMatchDist(self._name_to_shape[poly.GetName()]) < 10:
-        print "  (Skipping as it apears to be an exact duplicate)"
+        print("  (Skipping as it apears to be an exact duplicate)")
       else:
-        print "  (Adding new shape variant with uniquified name)"
+        print("  (Adding new shape variant with uniquified name)")
         inserted_name = "%s-%d" % (inserted_name, len(self._name_to_shape))
     self._name_to_shape[inserted_name] = poly
 
@@ -415,7 +422,7 @@ class PolyCollection(object):
     within max_radius of the given start and end points.
     """
     matches = []
-    for shape in self._name_to_shape.itervalues():
+    for shape in self._name_to_shape.values():
       if start_point.GetDistanceMeters(shape.GetPoint(0)) < max_radius and \
         end_point.GetDistanceMeters(shape.GetPoint(-1)) < max_radius:
         matches.append(shape)
@@ -539,7 +546,7 @@ class PolyGraph(PolyCollection):
     paths_found = [] # A heap sorted by inverse path length.
 
     for i, point in enumerate(points):
-      nearby = [p for p in self._nodes.iterkeys()
+      nearby = [p for p in self._nodes.keys()
                 if p.GetDistanceMeters(point) < max_radius]
       if verbosity >= 2:
         print ("Nearby points for point %d %s: %s"
@@ -549,7 +556,7 @@ class PolyGraph(PolyCollection):
       if nearby:
         nearby_points.append(nearby)
       else:
-        print "No nearby points found for point %s" % str(point.ToLatLng())
+        print("No nearby points found for point %s" % str(point.ToLatLng()))
         return None
 
     pathToStr = lambda start, end, path: ("  Best path %s -> %s: %s"
@@ -558,7 +565,7 @@ class PolyGraph(PolyCollection):
                                              path and path.GetName() or
                                              "None"))
     if verbosity >= 3:
-      print "Step 1"
+      print("Step 1")
     step = 2
 
     start_points = nearby_points[0]
@@ -568,12 +575,12 @@ class PolyGraph(PolyCollection):
       for end in end_points:
         path = self.ShortestPath(start, end)
         if verbosity >= 3:
-          print pathToStr(start, end, path)
+          print(pathToStr(start, end, path))
         PolyGraph._AddPathToHeap(paths_found, path, keep_best_n)
 
     for possible_points in nearby_points[2:]:
       if verbosity >= 3:
-        print "\nStep %d" % step
+        print("\nStep %d" % step)
         step += 1
       new_paths_found = []
 
@@ -586,7 +593,7 @@ class PolyGraph(PolyCollection):
           else:
             new_segment = self.ShortestPath(start, end)
             if verbosity >= 3:
-              print pathToStr(start, end, new_segment)
+              print(pathToStr(start, end, new_segment))
             start_end_paths[(start, end)] = new_segment
 
           if new_segment:

@@ -14,9 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from gtfsobjectbase import GtfsObjectBase
-import problems as problems_module
-import util
+from __future__ import division
+from __future__ import absolute_import
+from past.utils import old_div
+from .gtfsobjectbase import GtfsObjectBase
+from . import problems as problems_module
+from . import util
 
 class Route(GtfsObjectBase):
   """Represents a single route."""
@@ -40,7 +43,7 @@ class Route(GtfsObjectBase):
     }
   # Create a reverse lookup dict of route type names to route types.
   _ROUTE_TYPE_IDS = set(_ROUTE_TYPES.keys())
-  _ROUTE_TYPE_NAMES = dict((v['name'], k) for k, v in _ROUTE_TYPES.items())
+  _ROUTE_TYPE_NAMES = dict((v['name'], k) for k, v in list(_ROUTE_TYPES.items()))
   _TABLE_NAME = 'routes'
 
   def __init__(self, short_name=None, long_name=None, route_type=None,
@@ -226,7 +229,7 @@ class Route(GtfsObjectBase):
       txt_lum = util.ColorLuminance(self.route_text_color)
     else:
       txt_lum = util.ColorLuminance('000000')  # black (default)
-    if abs(txt_lum - bg_lum) < 510/7.:
+    if abs(txt_lum - bg_lum) < old_div(510,7.):
       # http://www.w3.org/TR/2000/WD-AERT-20000426#color-contrast recommends
       # a threshold of 125, but that is for normal text and too harsh for
       # big colored logos like line names, so we keep the original threshold
