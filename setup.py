@@ -26,7 +26,6 @@ for help on creating Windows executables.
 from distutils.core import setup
 import glob
 import os.path
-from transitfeed import __version__ as VERSION
 
 try:
   import py2exe
@@ -34,6 +33,12 @@ try:
 except ImportError as e:
   # Won't be able to generate win32 exe
   has_py2exe = False
+  
+with open('transitfeed/version.py') as fid:
+  for line in fid:
+      if line.startswith('__version__'):
+        VERSION = line.strip().split()[-1][1:-1]
+        break
 
 
 # py2exe doesn't automatically include pytz dependency because it is optional
